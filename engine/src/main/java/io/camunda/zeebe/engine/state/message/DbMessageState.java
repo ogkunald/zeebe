@@ -336,17 +336,16 @@ public final class DbMessageState implements MutableMessageState {
   }
 
   @Override
-  public void visitMessagesWithDeadlineBefore(
-      final long timestamp, final ExpiredMessageVisitor visitor) {
-    deadlineColumnFamily.whileTrue(
-        ((compositeKey, zbNil) -> {
-          final long deadline = compositeKey.first().getValue();
-          if (deadline <= timestamp) {
-            final long messageKey = compositeKey.second().inner().getValue();
-            return visitor.visit(messageKey);
-          }
-          return false;
-        }));
+  public void visitMessagesWithDeadlineBeforeTimestamp(
+      final long timestamp, final Index startAt, final ExpiredMessageVisitor visitor) {
+    if (startAt == null) {
+      deadlineColumnFamily.whileTrue((key, value) -> visit(timestamp, visitor, key));
+    } else {
+      deadline.wrapLong(startAt.deadline());
+      messageKey.wrapLong(startAt.key());
+      deadlineColumnFamily.whileTrue(
+          deadlineMessageKey, (key, value) -> visit(timestamp, visitor, key));
+    }
   }
 
   @Override
@@ -357,5 +356,17 @@ public final class DbMessageState implements MutableMessageState {
     this.messageId.wrapBuffer(messageId);
 
     return messageIdColumnFamily.exists(nameCorrelationMessageIdKey);
+  }
+
+  private static boolean visit(
+      final long timestamp,
+      final ExpiredMessageVisitor visitor,
+      final DbCompositeKey<DbLong, DbForeignKey<DbLong>> compositeDeadlineKey) {
+    final long deadline = compositeDeadlineKey.first().getValue();
+    if (deadline <= timestamp) {
+      final long messageKey = compositeDeadlineKey.second().inner().getValue();
+      return visitor.visit(deadline, messageKey);
+    }
+    return false;
   }
 }

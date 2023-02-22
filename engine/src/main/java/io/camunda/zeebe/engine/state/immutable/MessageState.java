@@ -22,9 +22,21 @@ public interface MessageState {
 
   StoredMessage getMessage(long messageKey);
 
-  void visitMessagesWithDeadlineBefore(long timestamp, ExpiredMessageVisitor visitor);
+  /**
+   * @param timestamp
+   * @param startAt
+   * @param visitor
+   */
+  void visitMessagesWithDeadlineBeforeTimestamp(
+      long timestamp, final Index startAt, ExpiredMessageVisitor visitor);
 
   boolean exist(DirectBuffer name, DirectBuffer correlationKey, DirectBuffer messageId);
+
+  /**
+   * @param key
+   * @param deadline
+   */
+  record Index(long key, long deadline) {}
 
   @FunctionalInterface
   interface MessageVisitor {
@@ -33,6 +45,6 @@ public interface MessageState {
 
   @FunctionalInterface
   interface ExpiredMessageVisitor {
-    boolean visit(long messageKey);
+    boolean visit(final long deadline, long messageKey);
   }
 }
