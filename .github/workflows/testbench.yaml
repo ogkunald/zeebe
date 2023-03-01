@@ -85,7 +85,7 @@ jobs:
           variables=$(echo "${{ inputs.variables }}" | envsubst)
           clients/go/cmd/zbctl/dist/zbctl create instance ${{ inputs.processId }} --variables "$variables"
         env:
-          IMAGE: ${{ steps.image-name.outputs.image-name }}
+          IMAGE: ${{ steps.build-docker.outputs.image }}
           ZEEBE_CLIENT_SECRET: ${{ steps.secrets.outputs.TESTBENCH_PROD_CLIENT_SECRET }}
           ZEEBE_ADDRESS: ${{ steps.secrets.outputs.TESTBENCH_PROD_CONTACT_POINT }}
           ZEEBE_AUTHORIZATION_SERVER_URL: 'https://login.cloud.ultrawombat.com/oauth/token'
