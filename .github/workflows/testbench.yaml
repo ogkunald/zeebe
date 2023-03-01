@@ -42,25 +42,30 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-      - id: image-name
-        name: Calculate image name
+      - id: image-tag
+        name: Calculate image tag
         shell: bash
         run: |
           # Replace dots and slashes with dashes
           branch=${BRANCH/[\/\.]/-}
           version=$(mvn help:evaluate -q -DforceStdout -D"expression=project.version")
-          echo "image-name=gcr.io/zeebe-io/zeebe:$version-$branch-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+          echo "image-tag=$version-$branch-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
         env:
           BRANCH: ${{ inputs.branch }}
-      - uses: docker/build-push-action@v4
+      - uses: ./.github/actions/setup-zeebe
         with:
-          context: .
-          tags: ${{ steps.image-name.outputs.image-name }}
+          secret_vault_secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secret_vault_address: ${{ secrets.VAULT_ADDR }}
+          secret_vault_roleId: ${{ secrets.VAULT_ROLE_ID }}
+      - uses: ./.github/actions/build-zeebe
+        id: build-zeebe
+      - uses: ./.github/actions/build-docker
+        id: build-docker
+        with:
+          repository: gcr.io/zeebe-io/zeebe
+          version: ${{ steps.image-tag.outputs.image-tag }}
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: DIST=build
-          target: app
+          distball: ${{ steps.build-zeebe.outputs.distball }}
       - name: Import Secrets
         id: secrets
         uses: hashicorp/vault-action@v2.5.0
