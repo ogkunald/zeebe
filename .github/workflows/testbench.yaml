@@ -48,7 +48,7 @@ jobs:
         run: |
           # Replace dots and slashes with dashes
           branch=${BRANCH/[\/\.]/-}
-          version=$(./mvnw help:evaluate -q -DforceStdout -D"expression=project.version")
+          version=$(mvn help:evaluate -q -DforceStdout -D"expression=project.version")
           echo "image-name=gcr.io/zeebe-io/zeebe:$version-$branch-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
         env:
           BRANCH: ${{ inputs.branch }}
