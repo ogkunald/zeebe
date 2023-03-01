@@ -51,7 +51,7 @@ jobs:
           version=$(./mvnw help:evaluate -q -DforceStdout -D"expression=project.version")
           echo "image-name=gcr.io/zeebe-io/zeebe:$version-$branch-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
         env:
-          BRANCH: "${{ inputs.branch }}"
+          BRANCH: ${{ inputs.branch }}
       - uses: docker/build-push-action@v4
         with:
           context: .
